@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Task Analyzer</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        textarea { width: 100%; font-size: 14px; padding: 10px; }
+        button { padding: 10px 20px; font-size: 16px; margin-top: 10px; cursor: pointer; }
+        .task-card { border-radius: 5px; padding: 10px; margin: 10px 0; color: white; transition: transform 0.2s; }
+        .task-card:hover { transform: scale(1.02); }
+        .high { background-color: red; }
+        .medium { background-color: orange; }
+        .low { background-color: green; }
+    </style>
+</head>
+<body>
+
+<h2>Smart Task Analyzer</h2>
+
+<textarea id="tasksInput" rows="10">[
+  {
+    "title": "Fix login bug",
+    "due_date": "2025-12-02",
+    "estimated_hours": 3,
+    "importance": 8,
+    "dependencies": []
+  },
+  {
+    "title": "Write README",
+    "due_date": "2025-12-05",
+    "estimated_hours": 2,
+    "importance": 6,
+    "dependencies": []
+  }
+]</textarea>
+
+<br>
+<button id="analyzeBtn">Analyze Tasks</button>
+
+<h3>Results:</h3>
+<div id="results"></div>
+
+<script>
+document.getElementById("analyzeBtn").addEventListener("click", async () => {
+    const text = document.getElementById("tasksInput").value;
+
+    let tasks;
+    try {
+        tasks = JSON.parse(text);
+    } catch (e) {
+        document.getElementById("results").textContent = "❌ Invalid JSON";
+        return;
+    }
+
+    try {
+        const response = await fetch("http://127.0.0.1:8000/tasks/analyze/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(tasks)
+        });
+
+        if (!response.ok) throw new Error("Server error");
+
+        const data = await response.json();
+
+        // Sort tasks by score (descending)
+        data.sort((a, b) => b.score - a.score);
+
+        const container = document.getElementById("results");
+        container.innerHTML = "";
+
+        data.forEach(task => {
+            const card = document.createElement("div");
+            card.classList.add("task-card");
+
+            if (task.score >= 100) card.classList.add("high");
+            else if (task.score >= 50) card.classList.add("medium");
+            else card.classList.add("low");
+
+            const today = new Date().toISOString().split('T')[0];
+            if (task.due_date < today) card.style.border = "2px solid black";
+
+            card.innerHTML = `
+                <strong>${task.title}</strong><br>
+                Due: ${task.due_date}<br>
+                Hours: ${task.estimated_hours}, Importance: ${task.importance}<br>
+                Score: ${task.score}
+            `;
+            container.appendChild(card);
+        });
+
+    } catch (error) {
+        document.getElementById("results").textContent = "❌ Could not reach backend";
+        console.error(error);
+    }
+});
+</script>
+
+</body>
+</html>
