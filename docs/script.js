@@ -1,4 +1,4 @@
-document.getElementById("analyzeBtn").addEventListener("click", async () => {
+document.getElementById("analyzeBtn").addEventListener("click", () => {
     const text = document.getElementById("tasksInput").value;
 
     let tasks;
@@ -9,21 +9,12 @@ document.getElementById("analyzeBtn").addEventListener("click", async () => {
         return;
     }
 
-    try {
-        const response = await fetch("http://127.0.0.1:8000/tasks/analyze/", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(tasks)
-        });
-
-        const data = await response.json();
-        document.getElementById("results").textContent =
-            JSON.stringify(data, null, 2);
-
-    } catch (error) {
-        document.getElementById("results").textContent =
-            "❌ Could not reach backend";
-    }
+    // Since backend is not available on GitHub Pages, show a demo message
+    const container = document.getElementById("results");
+    container.innerHTML = `
+        ⚠ Task analysis is not available in this GitHub Pages demo.
+        <br><br>
+        Here is your input data as JSON:<br>
+        <pre>${JSON.stringify(tasks, null, 2)}</pre>
+    `;
 });
